@@ -1,0 +1,14 @@
+gradio
+fastapi
+ultralytics
+PyYAML==6.0.1
+# tensorflow-cpu==2.11.0
+matplotlib==3.6.2
+numpy==1.23.5
+openvino==2023.0.1
+opencv-python-headless==4.6.0.66
+pandas==1.5.1
+Pillow==9.3.0
+protobuf==3.19.6
+psycopg2-binary
+prometheus_client

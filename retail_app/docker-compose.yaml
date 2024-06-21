@@ -1,0 +1,76 @@
+version: '3.2'
+
+networks:
+  monitor-net:
+    driver: bridge
+    
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    networks:
+      - monitor-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_compose
+    volumes:
+      - ${PWD}/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
+    networks:
+      - monitor-net
+
+  postgres_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: postgres_exporter_compose
+    environment:
+      DATA_SOURCE_NAME: ${DATABASE_URL}
+    ports:
+      - "${POSTGRES_EXPORTER_PORT}:${POSTGRES_EXPORTER_PORT}"
+    networks:
+      - monitor-net
+    depends_on:
+      - postgres
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_compose
+    ports:
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
+    networks:
+      - monitor-net
+    volumes:
+      - ./grafana_storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=${GF_USERS_ALLOW_SIGN_UP}
+    depends_on:
+      - prometheus
+
+  web_service:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile_app
+    container_name: web_service_compose
+    ports:
+      - "${WEB_SERVICE_PORT}:${WEB_SERVICE_PORT}"
+    volumes:
+      - ${PWD}:/app/
+    depends_on:
+      - postgres
+      - prometheus
+      - grafana
+
+volumes:
+  postgres_data:
+  grafana_storage:
